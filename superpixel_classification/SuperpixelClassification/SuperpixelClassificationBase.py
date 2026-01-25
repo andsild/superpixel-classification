@@ -486,6 +486,7 @@ class SuperpixelClassificationBase:
             item['name'], annotrec['annotation']['name'], annotrec['_id'], annotrec['_version']))
         featurePath = os.path.join(record['tempdir'], feature['name'])
         gc.downloadFile(feature['_id'], featurePath)
+        print(f"Downloaded '{feature['_id']}' to '{featurePath}'")
         with h5py.File(featurePath, 'r') as ffptr:
             fds = ffptr['images']
             if 'used_indices' in ffptr:
@@ -497,6 +498,7 @@ class SuperpixelClassificationBase:
                 if 0 < labelnum < len(elem['categories']):
                     labelname = elem['categories'][labelnum]['label']
                     if labelname in excludeLabelList:
+                        skipped_excluded += 1
                         continue
                     if labelname not in record['groups']:
                         record['groups'][labelname] = elem['categories'][labelnum]
@@ -524,6 +526,7 @@ class SuperpixelClassificationBase:
                     record['lastlog'] = time.time()
                     print(record['ds'].shape, record['counts'],
                           '%5.3f' % (time.time() - record['starttime']))
+            print(f"Skipped {skipped_excluded} samples with labels that were excluded")
 
     def trainModel(self, gc, annotationName, itemsAndAnnot, features, modelFolderId,
                    batchSize, epochs, trainingSplit, randomInput, labelList,
@@ -580,11 +583,11 @@ class SuperpixelClassificationBase:
             for attempt in tenacity.Retrying(stop=tenacity.stop_after_attempt(self.uploadRetries)):
                 with attempt:
                     modelFile = gc.uploadFileToFolder(modelFolderId, modelPath)
-            print('Saved model')
-            for attempt in tenacity.Retrying(stop=tenacity.stop_after_attempt(self.uploadRetries)):
+            print(f'Saved model to {modelFolderId}')
+            for attempt in Retrying(stop=stop_after_attempt(self.uploadRetries)):
                 with attempt:
                     modTrainingFile = gc.uploadFileToFolder(modelFolderId, modTrainingPath)
-            print('Saved modTraining')
+            print(f'Saved modTraining to {modelFolderId}')
             return modelFile, modTrainingFile
 
     def predictLabelsForItem(self, gc, annotationName, tempdir, model, item,
@@ -838,7 +841,7 @@ class SuperpixelClassificationBase:
                     modelFile = next(gc.listFile(item['_id'], limit=1))
                     break
             if not modelFile:
-                print('No model file found')
+                print(f'No model file found in {modelFolderId}')
                 return
             print(modelFile['name'], item)
             modelPath = os.path.join(tempdir, modelFile['name'])
@@ -851,7 +854,7 @@ class SuperpixelClassificationBase:
                     modTrainingFile = next(gc.listFile(item['_id'], limit=1))
                     break
             if not modTrainingFile:
-                print('No modTraining file found')
+                print(f'No modTraining file found in {modelFolderId}')
                 return
             print(modTrainingFile['name'], item)
             modTrainingPath = os.path.join(tempdir, modTrainingFile['name'])
@@ -910,19 +913,24 @@ class SuperpixelClassificationBase:
                     gc, args.images, args.annotationName, args.radius, args.magnification,
                     args.annotationDir, args.numWorkers, prog)
 
+            print("Creating features...")
             itemsAndAnnot = self.getItemsAndAnnotations(gc, args.images, args.annotationName)
             features = self.createFeatures(
                 gc, args.images, args.annotationName, itemsAndAnnot, args.features, args.patchSize,
                 args.numWorkers, prog, args.cutoff)
+            print("Done creating features...")
 
             if args.train:
                 print("Training...")
                 self.trainModel(
                     gc, args.images, args.annotationName, itemsAndAnnot, features, args.modeldir, args.batchSize,
                     args.epochs, args.split, args.randominput, args.labels, args.exclude, prog)
+                print("Done training...")
 
             print("Predicting labels...")
             self.predictLabels(
                 gc, args.images, args.annotationName, features, args.modeldir, args.annotationDir,
                 args.heatmaps, args.radius, args.magnification, args.certainty, args.batchSize, args.useCuda,
                 prog)
+            print("Done predicting labels...")
+        print("Done, exiting")

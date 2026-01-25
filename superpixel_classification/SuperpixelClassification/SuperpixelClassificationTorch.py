@@ -349,6 +349,7 @@ class SuperpixelClassificationTorch(SuperpixelClassificationBase):
         val_ds: torch.utils.data.TensorDataset
         train_dl: torch.utils.data.DataLoader
         val_dl: torch.utils.data.DataLoader
+        prog.message('Loading features for model training')
         train_arg1 = (
             torch.from_numpy(record['ds'][train_indices].transpose((0, 3, 2, 1)))
             if self.feature_is_image
@@ -659,9 +660,14 @@ class SuperpixelClassificationTorch(SuperpixelClassificationBase):
 
     def loadModel(self, modelPath):
         self.add_safe_globals()
-        model = torch.load(modelPath)
-        model.eval()
-        return model
+        try:
+            model = torch.load(modelPath, weights_only=False)
+            model.eval()
+            return model
+        except Exception as e:
+            print(f"Unable to load {modelPath}")
+            raise
+
 
     def saveModel(self, model, modelPath):
         self.add_safe_globals()
