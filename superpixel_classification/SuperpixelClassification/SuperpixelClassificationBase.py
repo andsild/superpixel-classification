@@ -16,6 +16,8 @@ import h5py
 import numpy as np
 import tenacity
 from numpy.typing import NDArray
+from tenacity import stop_after_attempt
+
 from progress_helper import ProgressHelper
 
 
@@ -352,6 +354,8 @@ class SuperpixelClassificationBase:
             # background is used if we have a bounding box of 1 pixel in top left corner that is unlabeled. We do not want to extract features for that
             has_background = elem['user']['bbox'][:4] == [0,0,1,1]
             start_index = 1 if has_background else 0
+            num_values = len(elem['values'])
+            labeled_samples = set([i for i, x in enumerate(elem['values']) if x > 0])
             unlabeled_samples = [i for i, x in enumerate(elem['values'][start_index:], start=start_index) if x == 0]
             if num_values - len(labeled_samples) > cutoff:
                 # only select a subset of unlabeled samples, i.e., prune the feature list
@@ -486,6 +490,7 @@ class SuperpixelClassificationBase:
             item['name'], annotrec['annotation']['name'], annotrec['_id'], annotrec['_version']))
         featurePath = os.path.join(record['tempdir'], feature['name'])
         gc.downloadFile(feature['_id'], featurePath)
+        skipped_excluded = 0
         print(f"Downloaded '{feature['_id']}' to '{featurePath}'")
         with h5py.File(featurePath, 'r') as ffptr:
             fds = ffptr['images']
@@ -584,7 +589,7 @@ class SuperpixelClassificationBase:
                 with attempt:
                     modelFile = gc.uploadFileToFolder(modelFolderId, modelPath)
             print(f'Saved model to {modelFolderId}')
-            for attempt in Retrying(stop=stop_after_attempt(self.uploadRetries)):
+            for attempt in tenacity.Retrying(stop=stop_after_attempt(self.uploadRetries)):
                 with attempt:
                     modTrainingFile = gc.uploadFileToFolder(modelFolderId, modTrainingPath)
             print(f'Saved modTraining to {modelFolderId}')

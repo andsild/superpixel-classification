@@ -319,7 +319,7 @@ class SuperpixelClassificationTorch(SuperpixelClassificationBase):
         if self.feature_is_image:
             # Feature is patch
             if self.certainty == 'batchbald':
-                model = _BayesianPatchTorchModel(num_classes)
+                model = _BayesianPatchTorchModel(num_classes, device)
             else:
                 mesg = 'Expected torch model for input of type image to be Bayesian'
                 raise ValueError(mesg)
@@ -509,7 +509,7 @@ class SuperpixelClassificationTorch(SuperpixelClassificationBase):
         return history
 
     def predictLabelsForItemDetails(
-        self, batchSize: int, ds_h5, item, model: torch.nn.Module, use_cuda : bool, prog: ProgressHelper,
+        self, batchSize: int, ds_h5, indices, item, model: torch.nn.Module, use_cuda : bool, prog: ProgressHelper,
     ):
         # print(f'Torch predictLabelsForItemDetails(batchSize={batchSize}, ...)')
         num_superpixels: int = ds_h5.shape[0]

@@ -10,6 +10,9 @@ import pytest
 # make pythonpath work out of the box - although your editor may complain
 import sys
 import os
+
+import torch
+
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
@@ -87,7 +90,7 @@ def test_train_model(create_sample_data):
             prog=prog,
             randomInput = False,
             trainingSplit = 0.5,
-            use_cuda = True,
+            use_cuda = torch.cuda.is_available(),
         )
 
     assert os.path.exists(modelFile)
