@@ -890,7 +890,7 @@ class SuperpixelClassificationBase:
                 if item['_id'] not in features:
                     continue
                 self.predictLabelsForItem(
-                    gc, annotationName, annotationFolderId, tempdir, model, item, annotrec, elem,
+                    gc, annotationName, tempdir, model, item, annotrec, elem,
                     features.get(item['_id']), curEpoch, userId, labels, groups, saliencyMaps,
                     radius, magnification, certainty, batchSize, use_cuda, prog)
             prog.progress(1)
