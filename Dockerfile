@@ -11,9 +11,8 @@ RUN apt-get update && \
     && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/*
 
-COPY . /opt/scw
-WORKDIR /opt/scw
-RUN python -m pip install --no-cache-dir -e .[tensorflow,torch] --find-links https://girder.github.io/large_image_wheels --extra-index-url https://download.pytorch.org/whl/cu126 && \
+RUN python -m pip install girder-client girder-slicer-cli-web h5py histomicstk tenacity al_bench@git+https://github.com/DigitalSlideArchive/ALBench.git \
+    --find-links https://girder.github.io/large_image_wheels --extra-index-url https://download.pytorch.org/whl/cu126 && \
     rm -rf /root/.cache/pip/* && \
     rdfind -minsize 32768 -makehardlinks true -makeresultsfile false /usr/local
 
@@ -24,8 +23,11 @@ RUN python -m pip install --no-cache-dir -e .[tensorflow,torch] --find-links htt
 #     cd HistomicsTK && \
 #     pip install .[tensorflow,torch]
 
-WORKDIR /opt/scw/superpixel_classification
+COPY . /opt/scw
+WORKDIR /opt/scw/
+RUN python -m pip install -e .
 
+WORKDIR /opt/scw/superpixel_classification
 RUN python -m slicer_cli_web.cli_list_entrypoint --list_cli
 RUN python -m slicer_cli_web.cli_list_entrypoint SuperpixelClassification --help
 

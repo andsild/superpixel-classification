@@ -928,13 +928,13 @@ class SuperpixelClassificationBase:
             if args.train:
                 print("Training...")
                 self.trainModel(
-                    gc, args.images, args.annotationName, itemsAndAnnot, features, args.modeldir, args.batchSize,
-                    args.epochs, args.split, args.randominput, args.labels, args.exclude, prog)
+                    gc, args.annotationName, itemsAndAnnot, features, args.modeldir, args.batchSize,
+                    args.epochs, args.split, args.randominput, args.labels, args.exclude, args.useCuda, prog)
                 print("Done training...")
 
             print("Predicting labels...")
             self.predictLabels(
-                gc, args.images, args.annotationName, features, args.modeldir, args.annotationDir,
+                gc, args.images, args.annotationName, itemsAndAnnot, features, args.modeldir, args.annotationDir,
                 args.heatmaps, args.radius, args.magnification, args.certainty, args.batchSize, args.useCuda,
                 prog)
             print("Done predicting labels...")

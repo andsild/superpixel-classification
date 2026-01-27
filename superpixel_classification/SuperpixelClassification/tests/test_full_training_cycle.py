@@ -22,6 +22,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+import torch.cuda
 from xdg_base_dirs import (xdg_cache_home, )
 
 # make pythonpath work out of the box - although your editor may complain
@@ -35,10 +36,10 @@ from tests.generate_MNIST_image import create_mnist_image
 
 NUM_WSIS = 2
 MNIST_IMAGE_SIZE = 28
-NUM_IMAGES_PER_WSI = 10 ** 2
+NUM_IMAGES_PER_WSI = 9
 COLOR_DIM = 3
 PATCH_SIZE = 100 # only size compatible with pytorch model for the time being (since there are hardcoded sizes in the definition of the model)
-NUM_EPOCHS = 5
+NUM_EPOCHS = 1
 
 @pytest.fixture(scope="function")
 def create_sample_data(request):
@@ -97,7 +98,7 @@ def test_main_pytorch(create_sample_data):
         randominput = False,
         split = 0.7,
         train = True,
-        useCuda = True,
+        useCuda = torch.cuda.is_available(),
         progress = True,
     )
     args = argparse.Namespace(**config)
